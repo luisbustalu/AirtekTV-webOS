@@ -2,7 +2,9 @@
 
 Aplicación no oficial de LG webOS para ver los canales de Airtek TV. No está afiliada a Airtek.
 
-La lista de canales sale de la API pública de Airtek. Las flechas mueven la guía, OK reproduce el canal seleccionado y Atrás vuelve a la guía. Un segundo Atrás cierra la aplicación.
+La aplicación consulta la API de Airtek para obtener la lista de canales y las direcciones de las transmisiones. Esas transmisiones también salen de la red de Airtek. Si no estás en una red con internet de Airtek la guía no carga y los canales no se reproducen.
+
+Las flechas mueven la guía, OK reproduce el canal seleccionado y Atrás vuelve a la guía. Un segundo Atrás cierra la aplicación.
 
 ## Instalación
 
