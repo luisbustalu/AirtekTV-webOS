@@ -12,7 +12,7 @@ El televisor tiene que tener el modo de desarrollador activado. La aplicación s
 2. En el computador, instala webOS Dev Manager para tu sistema desde su [última versión](https://github.com/webosbrew/dev-manager-desktop/releases/latest).
 3. En webOS Dev Manager, agrega el televisor con esa dirección IP y la frase de acceso. El puerto de desarrollo es `9922`.
 4. Descarga el `.ipk` de la [última versión de Airtek TV](https://github.com/luisbustalu/AirtekTV-webOS/releases/latest).
-5. Selecciona el televisor en webOS Dev Manager, elige **Install** y abre el `.ipk` descargado.
+5. Selecciona el televisor en webOS Dev Manager, elige **Instalar** (el botón dice Install) y abre el `.ipk` descargado.
 
 El paquete se llama `ovh.anonimo.airtektvwebos_<version>_all.ipk`. Cuando termine la instalación, abre **Airtek TV** desde el lanzador del televisor.
 

@@ -49,9 +49,14 @@ jobs:
           make_latest: "true"
           overwrite_files: true
           fail_on_unmatched_files: true
-          generate_release_notes: true
           files: dist/*.ipk
           body: |
-            webOS package for Airtek TV ${{ steps.app.outputs.version }}.
+            Paquete de Airtek TV ${{ steps.app.outputs.version }} para webOS.
 
-            Enable Developer Mode on the TV, then install the attached `.ipk` with [webOS Dev Manager](https://github.com/webosbrew/dev-manager-desktop/releases/latest).
+            El televisor tiene que tener el modo de desarrollador activado. Instala el archivo `.ipk` adjunto con [webOS Dev Manager](https://github.com/webosbrew/dev-manager-desktop/releases/latest).
+
+            1. En el televisor, instala **Developer Mode** desde LG Content Store, activa el modo de desarrollador y deja el servidor de claves encendido.
+            2. En el computador, instala webOS Dev Manager, agrega el televisor con la dirección IP y la frase de acceso. El puerto es `9922`.
+            3. Descarga el `.ipk` de esta versión, selecciona el televisor, elige **Instalar** (el botón dice Install) y abre el archivo.
+
+            Las instrucciones completas están en el [README](https://github.com/${{ github.repository }}/blob/HEAD/README.md).

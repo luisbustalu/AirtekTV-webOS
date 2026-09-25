@@ -822,7 +822,7 @@
 								return;
 							}
 
-							showPlayerInfo('hls.js no pudo reproducir este stream: ' + data.details, true);
+							showPlayerInfo('No se pudo reproducir este canal.', true);
 							destroyHls();
 						}
 					});
@@ -1139,7 +1139,7 @@
 			});
 
 			videoEl.addEventListener('waiting', function () {
-				showPlayerInfo('Buffering…');
+				showPlayerInfo('Cargando…');
 				updateDebug('waiting');
 			});
 
