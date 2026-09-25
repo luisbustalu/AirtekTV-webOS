@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="es" style="color-scheme: dark">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="theme-color" content="#050505">
+	<title>Airtek TV</title>
+	<style>
+		:root {
+			--bg: #050505;
+			--panel: #111;
+			--tile: #2e2e2e;
+			--tile-active: #1238d6;
+			--accent: #0a84ff;
+			--text: #fff;
+			--muted: #a6a6a6;
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		html,
+		body {
+			width: 100%;
+			height: 100%;
+			margin: 0;
+			overflow: hidden;
+			background: var(--bg);
+			color: var(--text);
+			font-family: Arial, Helvetica, sans-serif;
+			color-scheme: dark;
+		}
+
+		button {
+			font-family: inherit;
+		}
+
+		body {
+			display: flex;
+			flex-direction: column;
+		}
+
+		.topbar {
+			min-height: 104px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 24px;
+			padding: 16px 48px;
+			background: #101010;
+			border-bottom: 1px solid #1d1d1d;
+			flex: 0 0 auto;
+		}
+
+		.brand {
+			display: flex;
+			align-items: center;
+			min-width: 230px;
+		}
+
+		.brand img {
+			display: block;
+			width: 188px;
+			height: 70px;
+			object-fit: contain;
+		}
+
+		.hint {
+			color: var(--muted);
+			font-size: 22px;
+		}
+
+		.shell {
+			min-height: 0;
+			display: grid;
+			grid-template-columns: 380px 1fr;
+			flex: 1 1 auto;
+		}
+
+		.sidebar {
+			min-height: 0;
+			padding: 24px 22px 48px 48px;
+			background: #080808;
+			border-right: 1px solid #1b1b1b;
+			overflow-x: hidden;
+			overflow-y: auto;
+			scroll-padding: 16px;
+			scrollbar-width: thin;
+			scrollbar-color: #3a3a3a transparent;
+		}
+
+		.category {
+			width: 100%;
+			display: block;
+			margin-bottom: 14px;
+			padding: 16px 22px;
+			border: 2px solid transparent;
+			border-radius: 999px;
+			background: transparent;
+			color: var(--text);
+			font-size: 28px;
+			font-weight: 700;
+			text-align: left;
+		}
+
+		.category.selected {
+			background: var(--accent);
+		}
+
+		.category.focused {
+			border-color: #fff;
+			box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.55);
+		}
+
+		.content {
+			min-width: 0;
+			min-height: 0;
+			display: flex;
+			flex-direction: column;
+			padding: 24px 48px 48px 24px;
+			overflow: hidden;
+		}
+
+		.section-title {
+			margin: 0 0 18px;
+			font-size: 32px;
+			flex: 0 0 auto;
+			text-wrap: balance;
+		}
+
+		.grid {
+			flex: 1 1 auto;
+			min-height: 0;
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+			grid-auto-rows: 148px;
+			gap: 18px;
+			overflow-x: hidden;
+			overflow-y: auto;
+			padding: 10px;
+			scroll-behavior: smooth;
+			scroll-padding: 16px;
+			scrollbar-width: thin;
+			scrollbar-color: #3a3a3a transparent;
+		}
+
+		.channel {
+			position: relative;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			gap: 10px;
+			padding: 18px;
+			border: 3px solid transparent;
+			border-radius: 12px;
+			background: var(--tile);
+			color: var(--text);
+			font-size: 22px;
+			font-weight: 800;
+			text-align: center;
+			letter-spacing: 0.5px;
+			overflow: hidden;
+			transform-origin: center center;
+		}
+
+		.channel img {
+			display: block;
+			width: 120px;
+			height: 56px;
+			max-width: 82%;
+			object-fit: contain;
+		}
+
+		.channel-name {
+			max-width: 100%;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+
+		.channel::before {
+			content: attr(data-number);
+			position: absolute;
+			top: 10px;
+			left: 12px;
+			color: rgba(255, 255, 255, 0.72);
+			font-size: 16px;
+			font-weight: 700;
+			font-variant-numeric: tabular-nums;
+		}
+
+		.channel.focused {
+			z-index: 1;
+			border-color: var(--accent);
+			background: var(--tile-active);
+			box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.8);
+			transform: scale(1.04);
+		}
+
+		.player {
+			position: fixed;
+			inset: 0;
+			z-index: 20;
+			display: none;
+			background: #000;
+		}
+
+		.player.active {
+			display: block;
+		}
+
+		video {
+			width: 100%;
+			height: 100%;
+			background: #000;
+			object-fit: contain;
+		}
+
+		.player-info {
+			position: absolute;
+			left: 48px;
+			right: 48px;
+			bottom: 48px;
+			display: flex;
+			justify-content: space-between;
+			align-items: flex-end;
+			gap: 24px;
+			padding: 18px 22px;
+			border-radius: 12px;
+			background: rgba(0, 0, 0, 0.62);
+			transition: opacity 220ms ease;
+		}
+
+		.player-info.hidden {
+			opacity: 0;
+		}
+
+		.player-title {
+			font-size: 28px;
+			font-weight: 800;
+			font-variant-numeric: tabular-nums;
+		}
+
+		.status,
+		.player-hint {
+			color: var(--muted);
+			font-size: 20px;
+		}
+
+		.player-hint {
+			margin-top: 6px;
+		}
+
+		.player-debug {
+			display: none;
+			max-width: 58%;
+			color: #d2d2d2;
+			font-size: 16px;
+			line-height: 1.35;
+			text-align: right;
+			word-break: break-word;
+		}
+
+		body.debug .player-debug {
+			display: block;
+		}
+
+		.empty {
+			color: var(--muted);
+			font-size: 20px;
+			padding: 40px;
+		}
+
+		.splash {
+			position: fixed;
+			inset: 0;
+			z-index: 50;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			background: #000;
+			opacity: 1;
+			visibility: visible;
+			transition: opacity 420ms ease, visibility 420ms ease;
+		}
+
+		.splash.hidden {
+			opacity: 0;
+			visibility: hidden;
+			pointer-events: none;
+		}
+
+		.splash video {
+			width: min(100vw, 1280px);
+			height: min(100vh, 720px);
+			object-fit: contain;
+		}
+
+		@media (prefers-reduced-motion: reduce) {
+			.splash,
+			.player-info,
+			.channel {
+				transition: none;
+			}
+
+			.grid,
+			.sidebar {
+				scroll-behavior: auto;
+			}
+
+			.channel.focused {
+				transform: none;
+			}
+		}
+	</style>
+</head>
+<body>
+	<section class="splash" id="splash" aria-label="Airtek TV">
+		<video id="splashVideo" autoplay muted playsinline preload="auto">
+			<source src="splash.mp4" type="video/mp4">
+		</video>
+	</section>
+
+	<header class="topbar">
+		<div class="brand">
+			<img src="airtek_logo.png" alt="Airtek TV" width="188" height="70">
+		</div>
+		<div class="hint" id="hint">Cargando canales actualizados…</div>
+	</header>
+
+	<main class="shell" id="app">
+		<nav class="sidebar" id="categories" aria-label="Categorías"></nav>
+		<section class="content">
+			<h1 class="section-title" id="categoryTitle"></h1>
+			<div class="grid" id="channels"></div>
+		</section>
+	</main>
+
+	<section class="player" id="player" aria-label="Reproductor">
+		<video id="video" autoplay playsinline></video>
+		<div class="player-info" id="playerInfo">
+			<div>
+				<div class="player-title" id="playerTitle"></div>
+				<div class="status" id="playerStatus">Cargando stream…</div>
+				<div class="player-hint">Arriba/Abajo cambia canal · Atrás vuelve a la guía</div>
+			</div>
+			<div class="player-debug" id="playerDebug"></div>
+		</div>
+	</section>
+
+	<script src="hls.min.js"></script>
+	<script>
+		(function () {
+			'use strict';
+
+			var CHANNELS_API_URL = 'https://api.cloud.airteknet.io/api/v1/channels-manager-ms/get/channels/web/1.3';
+			var fallbackChannels = [
+				{ id: 1, category: 'Nacionales', name: 'AIRTEK TV', url: 'https://airtek.tv/livestream/HOME.m3u8' },
+				{ id: 2, category: 'Nacionales', name: 'VTV', url: 'https://airtek.tv/livestream/VTV.m3u8', backup: 'https://airtek.tv/livestream/VTV_RESPALDO.m3u8' },
+				{ id: 3, category: 'Nacionales', name: 'VTV HD', url: 'https://airtek.tv/livestream/VTV_HD.m3u8' },
+				{ id: 4, category: 'Nacionales', name: 'FANB', url: 'https://airtek.tv/livestream/TV_FANB.m3u8', backup: 'https://airtek.tv/livestream/TV_FANB_RESPALDO.m3u8' },
+				{ id: 5, category: 'Nacionales', name: 'ANTV', url: 'https://airtek.tv/livestream/ANTV.m3u8', backup: 'https://airtek.tv/livestream/ANTV_RESPALDO.m3u8' },
+				{ id: 6, category: 'Nacionales', name: 'VIVE TV', url: 'https://airtek.tv/livestream/VIVE_TV.m3u8', backup: 'https://airtek.tv/livestream/VIVE_TV_RESPALDO.m3u8' },
+				{ id: 7, category: 'Nacionales', name: 'VENEVISION', url: 'https://airtek.tv/livestream/Venevision.m3u8', backup: 'https://airtek.tv/livestream/Venevision_RESPALDO.m3u8' },
+				{ id: 8, category: 'Nacionales', name: 'GLOBOVISION', url: 'https://airtek.tv/livestream/Globovision.m3u8', backup: 'https://airtek.tv/livestream/Globovision_RESPALDO.m3u8' },
+				{ id: 9, category: 'Nacionales', name: 'TVES', url: 'https://airtek.tv/livestream/TVES.m3u8', backup: 'https://airtek.tv/livestream/TVES_RESPALDO.m3u8' },
+				{ id: 10, category: 'Nacionales', name: 'TELESUR', url: 'https://airtek.tv/livestream/TELESUR.m3u8', backup: 'https://airtek.tv/livestream/TELESUR_RESPALDO.m3u8' },
+				{ id: 11, category: 'Nacionales', name: 'CANAL 11', url: 'https://airtek.tv/livestream/CANAL_11.m3u8' },
+				{ id: 12, category: 'Nacionales', name: 'TELEVEN', url: 'https://airtek.tv/livestream/TELEVEN.m3u8', backup: 'https://airtek.tv/livestream/TELEVEN_RESPALDO.m3u8' },
+				{ id: 16, category: 'Entretenimiento', name: 'TELEMUNDO', url: 'https://airtek.tv/livestream/TELEMUNDO.m3u8' },
+				{ id: 17, category: 'Entretenimiento', name: 'A&E', url: 'https://airtek.tv/livestream/A_E_HD.m3u8' },
+				{ id: 18, category: 'Entretenimiento', name: 'E!', url: 'https://airtek.tv/livestream/E_ENTERTAINMENT.m3u8' },
+				{ id: 19, category: 'Entretenimiento', name: 'SONY', url: 'https://airtek.tv/livestream/SONY_HD.m3u8' },
+				{ id: 20, category: 'Entretenimiento', name: 'SONY MOVIES', url: 'https://airtek.tv/livestream/SONYMOVIES.m3u8' },
+				{ id: 21, category: 'Entretenimiento', name: 'WARNER', url: 'https://airtek.tv/livestream/WARNER_CHANNEL_HD.m3u8' },
+				{ id: 22, category: 'Entretenimiento', name: 'STAR', url: 'https://airtek.tv/livestream/STAR.m3u8' },
+				{ id: 23, category: 'Entretenimiento', name: 'SPACE', url: 'https://airtek.tv/livestream/SPACE_SD.m3u8', backup: 'https://airtek.tv/livestream/SPACE.m3u8' },
+				{ id: 24, category: 'Entretenimiento', name: 'TNT SERIES', url: 'https://airtek.tv/livestream/TNT_SERIES.m3u8' },
+				{ id: 25, category: 'Entretenimiento', name: 'TNT', url: 'https://airtek.tv/livestream/TNT_SD.m3u8', backup: 'https://airtek.tv/livestream/TNT.m3u8' },
+				{ id: 26, category: 'Entretenimiento', name: 'AXN', url: 'https://airtek.tv/livestream/AXN.m3u8' },
+				{ id: 27, category: 'Entretenimiento', name: 'GOLDEN', url: 'https://airtek.tv/livestream/GOLDEN.m3u8', backup: 'https://airtek.tv/livestream/GOLDEN_RESPALDO.m3u8' },
+				{ id: 30, category: 'Entretenimiento', name: 'CINE CANAL', url: 'https://airtek.tv/livestream/CINECANAL.m3u8' },
+				{ id: 31, category: 'Entretenimiento', name: 'STUDIO UNIVERSAL', url: 'https://airtek.tv/livestream/STUDIO_UNIVERSAL.m3u8' },
+				{ id: 32, category: 'Entretenimiento', name: 'UNIVERSAL', url: 'https://airtek.tv/livestream/UNIVERSAL.m3u8' },
+				{ id: 33, category: 'Entretenimiento', name: 'BITME', url: 'https://airtek.tv/livestream/BITME.m3u8' },
+				{ id: 35, category: 'Entretenimiento', name: 'PARAMOUNT', url: 'https://airtek.tv/livestream/Paramount.m3u8' },
+				{ id: 36, category: 'Entretenimiento', name: 'FX', url: 'https://airtek.tv/livestream/FX.m3u8' },
+				{ id: 37, category: 'Deportes', name: 'MERIDIANO', url: 'https://airtek.tv/livestream/Meridiano.m3u8', backup: 'https://airtek.tv/livestream/Meridiano_RESPALDO.m3u8' },
+				{ id: 38, category: 'Deportes', name: 'IVC', url: 'https://airtek.tv/livestream/IVC.m3u8' },
+				{ id: 39, category: 'Deportes', name: 'ESPN', url: 'https://airtek.tv/livestream/ESPN_1.m3u8', backup: 'https://airtek.tv/livestream/ESPN_1_RESPALDO.m3u8' },
+				{ id: 40, category: 'Deportes', name: 'ESPN 2', url: 'https://airtek.tv/livestream/ESPN_2.m3u8' },
+				{ id: 41, category: 'Deportes', name: 'ESPN 3', url: 'https://airtek.tv/livestream/ESPN_3.m3u8' },
+				{ id: 42, category: 'Deportes', name: 'ESPN 4', url: 'https://airtek.tv/livestream/ESPN_4.m3u8' },
+				{ id: 43, category: 'Deportes', name: 'ESPN 5', url: 'https://airtek.tv/livestream/ESPN_5.m3u8' },
+				{ id: 44, category: 'Deportes', name: 'ESPN 6', url: 'https://airtek.tv/livestream/ESPN_6.m3u8' },
+				{ id: 45, category: 'Deportes', name: 'ESPN 7', url: 'https://airtek.tv/livestream/ESPN_7.m3u8' },
+				{ id: 46, category: 'Infantil', name: 'DISNEY', url: 'https://airtek.tv/livestream/DISNEY_CHANNEL.m3u8' },
+				{ id: 47, category: 'Infantil', name: 'TOONCAST', url: 'https://airtek.tv/livestream/TOONCAST.m3u8' },
+				{ id: 48, category: 'Infantil', name: 'BABY TV', url: 'https://airtek.tv/livestream/BABY_TV.m3u8' },
+				{ id: 49, category: 'Infantil', name: 'DISNEY JR', url: 'https://airtek.tv/livestream/DISNEY_JUNIOR.m3u8' },
+				{ id: 50, category: 'Infantil', name: 'DREAMWORKS', url: 'https://airtek.tv/livestream/dreamworks.m3u8' },
+				{ id: 66, category: 'Infantil', name: 'NICK', url: 'https://airtek.tv/livestream/NICK.m3u8' },
+				{ id: 67, category: 'Infantil', name: 'NICK JR', url: 'https://airtek.tv/livestream/NIKJR.m3u8' },
+				{ id: 74, category: 'Infantil', name: 'CARTOONITO', url: 'https://airtek.tv/livestream/CARTOONITO.m3u8' },
+				{ id: 51, category: 'Educativo', name: 'HISTORY', url: 'https://airtek.tv/livestream/HISTORY_CHANNEL_HD.m3u8' },
+				{ id: 52, category: 'Educativo', name: 'H2', url: 'https://airtek.tv/livestream/H2.m3u8' },
+				{ id: 53, category: 'Educativo', name: 'NATGEO', url: 'https://airtek.tv/livestream/NATGEO.m3u8' },
+				{ id: 56, category: 'Musica', name: 'TELEHIT', url: 'https://airtek.tv/livestream/TELEHIT_HD.m3u8', backup: 'https://airtek.tv/livestream/TELEHIT_RESPALDO.m3u8' },
+				{ id: 57, category: 'Musica', name: 'TELEHIT MUSIC', url: 'https://airtek.tv/livestream/TELEHIT_MUSIC.m3u8', backup: 'https://airtek.tv/livestream/TELEHIT_MUSIC_RESPALDO.m3u8' },
+				{ id: 58, category: 'Musica', name: 'BANDAMAX', url: 'https://airtek.tv/livestream/Bandamax.m3u8' },
+				{ id: 59, category: 'Musica', name: 'MTV 80S', url: 'https://airtek.tv/livestream/MTV_80s.m3u8' },
+				{ id: 68, category: 'Musica', name: 'MTV HITS', url: 'https://airtek.tv/livestream/MTV_HITS.m3u8' },
+				{ id: 80, category: 'Musica', name: 'MTV', url: 'https://airtek.tv/livestream/MTVLA.m3u8' },
+				{ id: 62, category: 'Religion', name: 'ENLACE', url: 'https://airtek.tv/livestream/ENLACE.m3u8' },
+				{ id: 63, category: 'Religion', name: 'EWTN', url: 'https://airtek.tv/livestream/EWTN.m3u8' },
+				{ id: 64, category: 'Religion', name: 'ENLACE JUVENIL', url: 'https://airtek.tv/livestream/ENLACE_JUVENIL.m3u8' }
+			];
+
+			var channels = fallbackChannels.slice();
+			var categoryOrder = buildCategoryOrder(channels);
+			var categoriesEl = document.getElementById('categories');
+			var channelsEl = document.getElementById('channels');
+			var categoryTitleEl = document.getElementById('categoryTitle');
+			var hintEl = document.getElementById('hint');
+			var splashEl = document.getElementById('splash');
+			var splashVideoEl = document.getElementById('splashVideo');
+			var playerEl = document.getElementById('player');
+			var videoEl = document.getElementById('video');
+			var playerInfoEl = document.getElementById('playerInfo');
+			var playerTitleEl = document.getElementById('playerTitle');
+			var playerStatusEl = document.getElementById('playerStatus');
+			var playerDebugEl = document.getElementById('playerDebug');
+
+			var debugEnabled = /(^|[?&])debug=1(&|$)/.test(window.location.search);
+			if (debugEnabled) {
+				document.body.classList.add('debug');
+			}
+
+			var state = {
+				area: 'channels',
+				categoryIndex: 0,
+				channelIndex: 0,
+				gridColumns: 1,
+				currentChannel: null,
+				usingBackup: false,
+				infoTimer: null,
+				loadTimer: null,
+				hls: null,
+				playerHistoryPushed: false,
+				ignoreNextPop: false
+			};
+
+			function buildCategoryOrder(channelList) {
+				var seen = {};
+				var categories = [];
+
+				channelList.forEach(function (channel) {
+					if (!seen[channel.category]) {
+						seen[channel.category] = true;
+						categories.push(channel.category);
+					}
+				});
+
+				return categories;
+			}
+
+			function normalizeApiChannels(payload) {
+				if (!payload || !Array.isArray(payload.data)) {
+					return [];
+				}
+
+				return payload.data
+					.map(function (item) {
+						var category = item.categories && item.categories.tags ? String(item.categories.tags).trim() : 'Otros';
+						var backup = item.backup_url ? String(item.backup_url).trim() : '';
+
+						return {
+							id: item.id,
+							category: category || 'Otros',
+							name: item.title ? String(item.title).trim() : 'Canal ' + item.id,
+							url: item.url ? String(item.url).trim() : '',
+							backup: backup,
+							thumbnail: item.thumbnail ? String(item.thumbnail).trim() : '',
+							order: typeof item.order === 'number' ? item.order : 999999
+						};
+					})
+					.filter(function (channel) {
+						return channel.url;
+					})
+					.sort(function (a, b) {
+						return a.order - b.order || a.id - b.id;
+					});
+			}
+
+			function applyChannelList(nextChannels, sourceLabel) {
+				var currentChannelId = state.currentChannel ? state.currentChannel.id : null;
+				var previousCategory = categoryOrder[state.categoryIndex];
+				var previousChannel = channelsForCurrentCategory()[state.channelIndex];
+				var previousChannelId = previousChannel ? previousChannel.id : currentChannelId;
+
+				channels = nextChannels;
+				categoryOrder = buildCategoryOrder(channels);
+				state.categoryIndex = Math.max(0, categoryOrder.indexOf(previousCategory));
+				state.channelIndex = 0;
+
+				if (previousChannelId) {
+					var foundPreviousChannel = false;
+					for (var categoryIndex = 0; categoryIndex < categoryOrder.length; categoryIndex++) {
+						var categoryChannels = channels.filter(function (channel) {
+							return channel.category === categoryOrder[categoryIndex];
+						});
+						for (var channelIndex = 0; channelIndex < categoryChannels.length; channelIndex++) {
+							if (categoryChannels[channelIndex].id === previousChannelId) {
+								state.categoryIndex = categoryIndex;
+								state.channelIndex = channelIndex;
+								foundPreviousChannel = true;
+								break;
+							}
+						}
+						if (foundPreviousChannel) {
+							break;
+						}
+					}
+				}
+
+				if (hintEl) {
+					hintEl.textContent = sourceLabel + ' · Flechas para navegar · OK para reproducir · Atrás para volver';
+				}
+				render();
+			}
+
+			function loadChannelsFromApi() {
+				if (hintEl) {
+					hintEl.textContent = 'Cargando canales actualizados…';
+				}
+
+				fetch(CHANNELS_API_URL, { cache: 'no-store' })
+					.then(function (response) {
+						if (!response.ok) {
+							throw new Error('HTTP ' + response.status);
+						}
+						return response.json();
+					})
+					.then(function (payload) {
+						var apiChannels = normalizeApiChannels(payload);
+						if (!apiChannels.length) {
+							throw new Error('Respuesta sin canales reproducibles');
+						}
+						applyChannelList(apiChannels, 'Lista actualizada');
+					})
+					.catch(function (error) {
+						console.warn('No se pudo cargar la lista actualizada:', error);
+						if (hintEl) {
+							hintEl.textContent = 'Usando lista incluida · Flechas para navegar · OK para reproducir · Atrás para volver';
+						}
+					});
+			}
+
+			function channelsForCurrentCategory() {
+				return channels.filter(function (channel) {
+					return channel.category === categoryOrder[state.categoryIndex];
+				});
+			}
+
+			function finishSplash() {
+				if (!splashEl || splashEl.classList.contains('hidden')) {
+					return;
+				}
+
+				splashEl.classList.add('hidden');
+				if (splashVideoEl) {
+					splashVideoEl.pause();
+				}
+				renderFocus();
+			}
+
+			function renderCategories() {
+				categoriesEl.innerHTML = '';
+
+				categoryOrder.forEach(function (category, index) {
+					var button = document.createElement('button');
+					button.className = 'category';
+					button.textContent = category;
+					button.type = 'button';
+					button.tabIndex = -1;
+					button.addEventListener('mouseenter', function () {
+						if (state.categoryIndex === index && state.area === 'categories') {
+							return;
+						}
+						state.categoryIndex = index;
+						state.channelIndex = 0;
+						state.area = 'categories';
+						render();
+					});
+					button.addEventListener('click', function () {
+						state.categoryIndex = index;
+						state.channelIndex = 0;
+						state.area = 'channels';
+						render();
+					});
+					categoriesEl.appendChild(button);
+				});
+			}
+
+			function renderChannels() {
+				var category = categoryOrder[state.categoryIndex];
+				var visibleChannels = channelsForCurrentCategory();
+				categoryTitleEl.textContent = category;
+				channelsEl.innerHTML = '';
+
+				if (!visibleChannels.length) {
+					channelsEl.innerHTML = '<div class="empty">No hay canales en esta categoría.</div>';
+					return;
+				}
+
+				visibleChannels.forEach(function (channel, index) {
+					var tile = document.createElement('button');
+					tile.className = 'channel';
+					tile.type = 'button';
+					tile.tabIndex = -1;
+					tile.dataset.number = channel.id;
+
+					if (channel.thumbnail) {
+						var image = document.createElement('img');
+						image.src = channel.thumbnail;
+						image.alt = '';
+						image.width = 120;
+						image.height = 56;
+						image.loading = 'lazy';
+						image.addEventListener('error', function () {
+							if (image.parentNode) {
+								image.parentNode.removeChild(image);
+							}
+						});
+						tile.appendChild(image);
+					}
+
+					var name = document.createElement('span');
+					name.className = 'channel-name';
+					name.textContent = channel.name;
+					tile.appendChild(name);
+
+					tile.addEventListener('mouseenter', function () {
+						if (state.channelIndex === index && state.area === 'channels') {
+							return;
+						}
+						state.channelIndex = index;
+						state.area = 'channels';
+						renderFocus();
+					});
+					tile.addEventListener('click', function () {
+						state.channelIndex = index;
+						state.area = 'channels';
+						playSelectedChannel();
+					});
+					channelsEl.appendChild(tile);
+				});
+			}
+
+			function renderFocus() {
+				var categoryButtons = categoriesEl.querySelectorAll('.category');
+				var channelButtons = channelsEl.querySelectorAll('.channel');
+
+				categoryButtons.forEach(function (button, index) {
+					button.classList.toggle('selected', index === state.categoryIndex);
+					button.classList.toggle('focused', state.area === 'categories' && index === state.categoryIndex);
+				});
+
+				channelButtons.forEach(function (button, index) {
+					button.classList.toggle('focused', state.area === 'channels' && index === state.channelIndex);
+				});
+
+				var focused = state.area === 'channels' ? channelButtons[state.channelIndex] : categoryButtons[state.categoryIndex];
+				if (focused) {
+					focused.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+				}
+			}
+
+			function render() {
+				renderCategories();
+				renderChannels();
+				clampChannelIndex();
+				updateGridColumns();
+				renderFocus();
+			}
+
+			function clampChannelIndex() {
+				var count = channelsForCurrentCategory().length;
+				state.channelIndex = Math.max(0, Math.min(state.channelIndex, count - 1));
+			}
+
+			function updateGridColumns() {
+				var tiles = channelsEl.querySelectorAll('.channel');
+				if (!tiles.length) {
+					state.gridColumns = 1;
+					return;
+				}
+
+				var firstTop = tiles[0].offsetTop;
+				var columns = 0;
+				for (var i = 0; i < tiles.length; i++) {
+					if (Math.abs(tiles[i].offsetTop - firstTop) > 2) {
+						break;
+					}
+					columns++;
+				}
+				state.gridColumns = Math.max(1, columns);
+			}
+
+			function getGridColumns() {
+				return state.gridColumns || 1;
+			}
+
+			function moveCategory(delta) {
+				state.categoryIndex = Math.max(0, Math.min(state.categoryIndex + delta, categoryOrder.length - 1));
+				state.channelIndex = 0;
+				render();
+			}
+
+			function moveChannel(delta) {
+				var count = channelsForCurrentCategory().length;
+				var nextIndex = state.channelIndex + delta;
+
+				if (nextIndex < 0) {
+					moveToAdjacentCategory(-1, 'end');
+					return;
+				}
+
+				if (nextIndex >= count) {
+					moveToAdjacentCategory(1, 'start');
+					return;
+				}
+
+				state.channelIndex = nextIndex;
+				renderFocus();
+			}
+
+			function moveToAdjacentCategory(delta, position) {
+				var nextCategoryIndex = state.categoryIndex + delta;
+
+				if (nextCategoryIndex < 0 || nextCategoryIndex >= categoryOrder.length) {
+					return false;
+				}
+
+				state.categoryIndex = nextCategoryIndex;
+				state.channelIndex = position === 'end' ? channelsForCurrentCategory().length - 1 : 0;
+				state.area = 'channels';
+				render();
+				return true;
+			}
+
+			function playSelectedChannel() {
+				var channel = channelsForCurrentCategory()[state.channelIndex];
+				if (!channel) {
+					return;
+				}
+
+				window.clearTimeout(state.loadTimer);
+				state.currentChannel = channel;
+				state.usingBackup = false;
+				playerTitleEl.textContent = channel.id + '  ' + channel.name;
+				playerStatusEl.textContent = 'Cargando stream…';
+				updateDebug('URL: ' + channel.url);
+				playerInfoEl.classList.remove('hidden');
+				if (!playerEl.classList.contains('active')) {
+					pushPlayerHistory();
+				}
+				playerEl.classList.add('active');
+				playStream(channel.url);
+			}
+
+			function pushPlayerHistory() {
+				if (state.playerHistoryPushed) {
+					return;
+				}
+
+				try {
+					window.history.pushState({ airtekPlayer: true }, '', window.location.href);
+					state.playerHistoryPushed = true;
+				} catch (error) {
+					console.warn('No se pudo crear historial del reproductor:', error);
+				}
+			}
+
+			function prefersNativeHls() {
+				var nativeSupport = videoEl.canPlayType('application/vnd.apple.mpegurl') || videoEl.canPlayType('application/x-mpegURL');
+				var isWebOS = !!(window.webOS || /Web0S|webOS/i.test(navigator.userAgent || ''));
+				if (isWebOS) {
+					return true;
+				}
+				// Chromium often answers "maybe" and then rejects the stream.
+				return nativeSupport === 'probably';
+			}
+
+			function playWithNativeHls(url) {
+				updateDebug('Usando HLS nativo: ' + url);
+				videoEl.src = url;
+				videoEl.load();
+				startVideoPlayback();
+			}
+
+			function playStream(url) {
+				destroyHls();
+				videoEl.pause();
+				videoEl.removeAttribute('src');
+				videoEl.load();
+
+				if (prefersNativeHls()) {
+					playWithNativeHls(url);
+				} else if (window.Hls && window.Hls.isSupported()) {
+					state.hls = new window.Hls({
+						enableWorker: false,
+						lowLatencyMode: false
+					});
+					state.hls.on(window.Hls.Events.ERROR, function (event, data) {
+						updateDebug('hls.js error: ' + data.type + ' / ' + data.details);
+						if (data.fatal) {
+							if (state.currentChannel && state.currentChannel.backup && !state.usingBackup) {
+								switchToBackup('hls.js falló. Probando stream alterno…');
+								return;
+							}
+
+							showPlayerInfo('hls.js no pudo reproducir este stream: ' + data.details, true);
+							destroyHls();
+						}
+					});
+					state.hls.on(window.Hls.Events.MANIFEST_PARSED, function () {
+						updateDebug('hls.js manifiesto cargado');
+						startVideoPlayback();
+					});
+					updateDebug('Usando hls.js: ' + url);
+					state.hls.loadSource(url);
+					state.hls.attachMedia(videoEl);
+				} else {
+					playWithNativeHls(url);
+				}
+
+				startLoadWatchdog();
+			}
+
+			function startVideoPlayback() {
+				var playPromise = videoEl.play();
+				if (playPromise && playPromise.catch) {
+					playPromise.catch(function (error) {
+						updateDebug('play() falló: ' + error.message);
+						if (videoEl.error) {
+							return;
+						}
+						showPlayerInfo('Presiona OK si el TV bloqueó la reproducción automática.', true);
+					});
+				}
+			}
+
+			function destroyHls() {
+				if (state.hls) {
+					state.hls.destroy();
+					state.hls = null;
+				}
+			}
+
+			function requestFullscreen() {
+				var target = playerEl;
+				var request = target.requestFullscreen || target.webkitRequestFullscreen || target.mozRequestFullScreen || target.msRequestFullscreen;
+
+				if (request) {
+					try {
+						request.call(target);
+					} catch (error) {
+						console.warn('Fullscreen request failed:', error);
+					}
+				}
+			}
+
+			function exitFullscreen() {
+				var exit = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+				if (exit && (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement)) {
+					try {
+						exit.call(document);
+					} catch (error) {
+						console.warn('Fullscreen exit failed:', error);
+					}
+				}
+			}
+
+			function closePlayer(options) {
+				options = options || {};
+				window.clearTimeout(state.loadTimer);
+				destroyHls();
+				videoEl.pause();
+				videoEl.removeAttribute('src');
+				videoEl.load();
+				playerEl.classList.remove('active');
+				playerInfoEl.classList.remove('hidden');
+				exitFullscreen();
+				state.area = 'channels';
+				renderFocus();
+
+				if (state.playerHistoryPushed) {
+					state.playerHistoryPushed = false;
+
+					if (!options.skipHistory) {
+						state.ignoreNextPop = true;
+						window.history.back();
+					}
+				}
+			}
+
+			function hidePlayerInfoSoon() {
+				window.clearTimeout(state.infoTimer);
+				state.infoTimer = window.setTimeout(function () {
+					if (playerEl.classList.contains('active')) {
+						playerInfoEl.classList.add('hidden');
+					}
+				}, 3200);
+			}
+
+			function showPlayerInfo(message, sticky) {
+				if (message) {
+					playerStatusEl.textContent = message;
+				}
+				playerInfoEl.classList.remove('hidden');
+				if (sticky) {
+					window.clearTimeout(state.infoTimer);
+					return;
+				}
+				hidePlayerInfoSoon();
+			}
+
+			function updateDebug(message) {
+				if (!debugEnabled) {
+					return;
+				}
+
+				var support = videoEl.canPlayType('application/vnd.apple.mpegurl') || videoEl.canPlayType('application/x-mpegURL') || 'no nativo';
+				var hlsJs = window.Hls && window.Hls.isSupported() ? 'sí' : 'no';
+				playerDebugEl.textContent = message + ' | HLS nativo: ' + support + ' | hls.js: ' + hlsJs + ' | readyState: ' + videoEl.readyState + ' | networkState: ' + videoEl.networkState;
+				console.log('[Airtek TV]', message, {
+					nativeHls: support,
+					hlsJs: hlsJs,
+					readyState: videoEl.readyState,
+					networkState: videoEl.networkState,
+					error: videoEl.error
+				});
+			}
+
+			function startLoadWatchdog() {
+				window.clearTimeout(state.loadTimer);
+				state.loadTimer = window.setTimeout(function () {
+					if (!playerEl.classList.contains('active') || videoEl.readyState >= 3) {
+						return;
+					}
+
+					if (state.currentChannel && state.currentChannel.backup && !state.usingBackup) {
+						switchToBackup('El stream principal no avanzó. Probando alterno…');
+						return;
+					}
+
+					var hlsSupport = videoEl.canPlayType('application/vnd.apple.mpegurl') || videoEl.canPlayType('application/x-mpegURL');
+					if (!hlsSupport && !state.hls) {
+						showPlayerInfo('Este simulador/navegador no reporta soporte HLS nativo. Pruébalo en el TV real.', true);
+					} else {
+						showPlayerInfo('El stream no avanzó. Puede ser IP, codec o segmentos bloqueados.', true);
+					}
+					updateDebug('Timeout esperando datos de video');
+				}, 12000);
+			}
+
+			function describeMediaError() {
+				if (!videoEl.error) {
+					return 'Error de video desconocido.';
+				}
+
+				switch (videoEl.error.code) {
+					case 1:
+						return 'Carga abortada.';
+					case 2:
+						return 'Error de red cargando el stream.';
+					case 3:
+						return 'El TV no pudo decodificar este stream.';
+					case 4:
+						return 'Formato o codec no soportado.';
+					default:
+						return 'Error de video codigo ' + videoEl.error.code + '.';
+				}
+			}
+
+			function switchToBackup(message) {
+				if (!state.currentChannel || !state.currentChannel.backup) {
+					return false;
+				}
+
+				state.usingBackup = true;
+				playerStatusEl.textContent = message || 'Probando stream alterno…';
+				updateDebug('Backup URL: ' + state.currentChannel.backup);
+				playStream(state.currentChannel.backup);
+				return true;
+			}
+
+			function playAdjacentChannel(delta) {
+				var count = channelsForCurrentCategory().length;
+				var nextIndex = state.channelIndex + delta;
+				if (nextIndex < 0 || nextIndex >= count) {
+					if (!moveToAdjacentCategory(delta > 0 ? 1 : -1, delta > 0 ? 'start' : 'end')) {
+						showPlayerInfo('No hay más canales.');
+						return;
+					}
+				} else {
+					state.channelIndex = nextIndex;
+				}
+
+				playSelectedChannel();
+			}
+
+			function handlePlayerKey(keyCode) {
+				switch (keyCode) {
+					case 13:
+						if (videoEl.paused) {
+							videoEl.play();
+							showPlayerInfo('Reproduciendo.');
+						} else {
+							videoEl.pause();
+							showPlayerInfo('Pausado.');
+						}
+						break;
+					case 38:
+						playAdjacentChannel(-1);
+						break;
+					case 40:
+						playAdjacentChannel(1);
+						break;
+					case 37:
+					case 39:
+						showPlayerInfo();
+						break;
+					case 27:
+					case 461:
+					case 8:
+						closePlayer();
+						break;
+				}
+			}
+
+			function handleGuideKey(keyCode) {
+				var columns = getGridColumns();
+
+				if (state.area === 'categories') {
+					switch (keyCode) {
+						case 38:
+							moveCategory(-1);
+							break;
+						case 40:
+							moveCategory(1);
+							break;
+						case 39:
+						case 13:
+							state.area = 'channels';
+							renderFocus();
+							break;
+						case 27:
+						case 461:
+						case 8:
+							exitApp();
+							break;
+					}
+					return;
+				}
+
+				switch (keyCode) {
+					case 37:
+						if (state.channelIndex % columns === 0) {
+							state.area = 'categories';
+							renderFocus();
+						} else {
+							moveChannel(-1);
+						}
+						break;
+					case 39:
+						moveChannel(1);
+						break;
+					case 38:
+						moveChannel(-columns);
+						break;
+					case 40:
+						moveChannel(columns);
+						break;
+					case 13:
+						playSelectedChannel();
+						break;
+					case 27:
+					case 461:
+					case 8:
+						state.area = 'categories';
+						renderFocus();
+						break;
+				}
+			}
+
+			document.addEventListener('keydown', function (event) {
+				var handledKeys = [8, 13, 27, 37, 38, 39, 40, 461];
+				var keyCode = event.keyCode || event.which;
+
+				if (handledKeys.indexOf(keyCode) === -1) {
+					return;
+				}
+
+				event.preventDefault();
+
+				if (splashEl && !splashEl.classList.contains('hidden')) {
+					finishSplash();
+					return;
+				}
+
+				if (playerEl.classList.contains('active')) {
+					handlePlayerKey(keyCode);
+				} else {
+					handleGuideKey(keyCode);
+				}
+			});
+
+			videoEl.addEventListener('playing', function () {
+				window.clearTimeout(state.loadTimer);
+				playerStatusEl.textContent = state.usingBackup ? 'Reproduciendo stream alterno.' : 'Reproduciendo.';
+				updateDebug('playing');
+				hidePlayerInfoSoon();
+			});
+
+			videoEl.addEventListener('loadstart', function () {
+				updateDebug('loadstart');
+			});
+
+			videoEl.addEventListener('loadedmetadata', function () {
+				updateDebug('metadata cargada: ' + videoEl.videoWidth + 'x' + videoEl.videoHeight);
+			});
+
+			videoEl.addEventListener('canplay', function () {
+				updateDebug('canplay');
+			});
+
+			videoEl.addEventListener('waiting', function () {
+				showPlayerInfo('Buffering…');
+				updateDebug('waiting');
+			});
+
+			videoEl.addEventListener('stalled', function () {
+				updateDebug('stalled');
+			});
+
+			videoEl.addEventListener('suspend', function () {
+				updateDebug('suspend');
+			});
+
+			videoEl.addEventListener('abort', function () {
+				updateDebug('abort');
+			});
+
+			videoEl.addEventListener('error', function () {
+				window.clearTimeout(state.loadTimer);
+				updateDebug(describeMediaError());
+
+				if (state.currentChannel && state.currentChannel.backup && !state.usingBackup) {
+					switchToBackup(describeMediaError() + ' Probando alterno…');
+					return;
+				}
+
+				showPlayerInfo('No se pudo reproducir este canal. ' + describeMediaError(), true);
+			});
+
+			var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+			if (reduceMotion || !splashVideoEl) {
+				finishSplash();
+			} else {
+				splashVideoEl.addEventListener('ended', finishSplash);
+				splashVideoEl.addEventListener('error', finishSplash);
+				window.setTimeout(finishSplash, 5000);
+			}
+
+			window.addEventListener('popstate', function () {
+				if (state.ignoreNextPop) {
+					state.ignoreNextPop = false;
+					return;
+				}
+
+				if (playerEl.classList.contains('active')) {
+					closePlayer({ skipHistory: true });
+				}
+			});
+
+			function exitApp() {
+				if (window.webOS && typeof window.webOS.platformBack === 'function') {
+					window.webOS.platformBack();
+				}
+			}
+
+			function leavePlayback() {
+				if (playerEl.classList.contains('active')) {
+					closePlayer();
+				}
+			}
+
+			document.addEventListener('visibilitychange', function () {
+				if (document.hidden) {
+					leavePlayback();
+				}
+			});
+
+			document.addEventListener('webOSRelaunch', leavePlayback);
+
+			window.addEventListener('resize', function () {
+				updateGridColumns();
+				renderFocus();
+			});
+
+			render();
+			loadChannelsFromApi();
+		})();
+	</script>
+</body>
+</html>

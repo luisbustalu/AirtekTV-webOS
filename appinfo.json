@@ -1,0 +1,12 @@
+{
+  "id": "ovh.anonimo.airtektvwebos",
+  "version": "1.3.0",
+  "vendor": "anonimo.ovh",
+  "type": "web",
+  "main": "index.html",
+  "title": "Airtek TV",
+  "icon": "icon.png",
+  "largeIcon": "largeIcon.png",
+  "resolution": "1920x1080",
+  "handlesRelaunch": true
+}
